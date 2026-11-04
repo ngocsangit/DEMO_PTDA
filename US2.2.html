@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang chi tiết thuốc</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: #333;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .header {
+            background-color: #ffffff;
+            color: #333;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            color: #0f6d48; 
+        }
+
+        .search-box input {
+            width: 350px;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .breadcrumb {
+            padding: 12px 0;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .breadcrumb a:hover {
+            color: #0f6d48;
+        }
+
+        .demo-bar {
+            background-color: #eaf6ec;
+            border: 1px dashed #0f6d48; 
+            padding: 8px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .demo-btn {
+            background-color: #0f6d48;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .product-detail-card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 25px;
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .product-gallery {
+            width: 40%;
+            flex-shrink: 0;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 320px;
+            background-color: #eaf6ec; 
+            border: 1px solid #cce5d6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #666;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .thumb-list {
+            display: flex;
+            gap: 10px;
+        }
+
+        .thumb-item {
+            width: 70px;
+            height: 70px;
+            background-color: #eaf6ec;
+            border: 1px solid #cce5d6;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            text-align: center;
+            color: #666;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .thumb-item.active {
+            border: 2px solid #0f6d48;
+            color: #0f6d48;
+            font-weight: bold;
+        }
+
+        .product-summary {
+            flex: 1;
+        }
+
+        .badge-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .badge-otc {
+            background-color: #e6f7ed;
+            color: #00a651;
+        }
+
+        .badge-rx {
+            background-color: #fff4e5;
+            color: #d97706;
+            display: none;
+        }
+
+        .badge-brand {
+            background-color: #eaf6ec;
+            color: #0f6d48;
+        }
+
+        .product-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 6px;
+        }
+
+        .product-code {
+            font-size: 13px;
+            color: #777;
+            margin-bottom: 15px;
+        }
+
+        .price-box {
+            background-color: #f0f7f3;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #0f6d48;
+            margin-bottom: 18px;
+        }
+
+        .current-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f6d48;
+        }
+
+        .price-note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .meta-table {
+            width: 100%;
+            margin-bottom: 18px;
+            border-collapse: collapse;
+        }
+
+        .meta-table td {
+            padding: 6px 0;
+            vertical-align: top;
+        }
+
+        .meta-label {
+            width: 150px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .option-label {
+            width: 150px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .unit-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .unit-btn {
+            padding: 6px 16px;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .unit-btn.active {
+            border-color: #0f6d48;
+            background-color: #eaf6ec;
+            color: #0f6d48;
+            font-weight: bold;
+        }
+
+        .qty-control {
+            display: flex;
+            align-items: center;
+        }
+
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #ccc;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .qty-input {
+            width: 50px;
+            height: 32px;
+            text-align: center;
+            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+            border-left: none;
+            border-right: none;
+        }
+
+        .rx-warning-box {
+            display: none;
+            background-color: #fff8eb;
+            border: 1px solid #f59e0b;
+            color: #b45309;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-large {
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-add-cart {
+            background-color: #eaf6ec;
+            color: #0f6d48;
+            border: 1px solid #0f6d48;
+        }
+
+        .btn-buy-now {
+            background-color: #0f6d48;
+            color: white;
+        }
+
+        .btn-consult-rx {
+            display: none;
+            background-color: #d97706;
+            color: white;
+            width: 100%;
+        }
+
+        .info-section {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 25px;
+            margin-bottom: 40px;
+        }
+
+        .info-tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .tab-link {
+            padding: 10px 18px;
+            font-weight: bold;
+            color: #555;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-link:hover,
+        .tab-link.active {
+            color: #0f6d48;
+            border-bottom-color: #0f6d48;
+        }
+
+        .content-block {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        .content-block:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .content-title {
+            font-size: 17px;
+            font-weight: bold;
+            color: #0f6d48;
+            margin-bottom: 12px;
+            border-left: 4px solid #0f6d48;
+            padding-left: 10px;
+        }
+
+        .ingredient-table {
+            width: 100%;
+            max-width: 600px;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .ingredient-table th,
+        .ingredient-table td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .ingredient-table th {
+            background-color: #f4f6f8;
+        }
+
+        .content-list {
+            padding-left: 20px;
+        }
+
+        .content-list li {
+            margin-bottom: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .product-detail-card { flex-direction: column; }
+            .product-gallery { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <a href="index.html" class="logo">Nhà thuốc Pharmacity</a>
+            <div class="search-box">
+                <input type="text" placeholder="Tìm tên thuốc, hoạt chất, triệu chứng...">
+            </div>
+            <div>Giỏ hàng (1)</div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="index.html">Trang chủ</a> » 
+            <a href="index.html">Thuốc giảm đau, hạ sốt</a> » 
+            <strong>Paracetamol 500mg</strong>
+        </div>
+        <div class="demo-bar">
+            <span><strong>Chế độ kiểm thử đồ án:</strong> Đang hiển thị giao diện <u id="demo-status">Thuốc Không Kê Đơn (OTC)</u></span>
+            <button class="demo-btn" onclick="togglePrescriptionMode()">Chuyển sang Thuốc Kê Đơn (ETC)</button>
+        </div>
+        <div class="product-detail-card">
+            <div class="product-gallery">
+                <div class="main-image" id="mainImage">
+                    [Ảnh thuốc]
+                </div>
+                <div class="thumb-list">
+                    <div class="thumb-item active" onclick="changeImage(this, '[Mặt trước]')">Mặt trước</div>
+                    <div class="thumb-item" onclick="changeImage(this, '[Vỉ thuốc]')">Vỉ thuốc</div>
+                    <div class="thumb-item" onclick="changeImage(this, '[Nhãn thuốc]')">Nhãn thuốc</div>
+                    <div class="thumb-item" onclick="changeImage(this, '[Toa thuốc]')">Toa thuốc</div>
+                </div>
+            </div>
+            <div class="product-summary">
+            
+                <div class="badge-group">
+                    <span class="badge badge-otc" id="badgeOTC">Thuốc không kê đơn (OTC)</span>
+                    <span class="badge badge-rx" id="badgeRX">Thuốc kê đơn (ETC - Cần đơn bác sĩ)</span>
+                    <span class="badge badge-brand">Thương hiệu: Công ty Dược phẩm A</span>
+                </div>
+
+                <h1 class="product-title">Paracetamol 500mg giảm đau, hạ sốt (Hộp 100 viên)</h1>
+                <div class="product-code">Mã thuốc: MT0001 | Tồn kho: 120</div>
+                <div class="price-box">
+                    <div class="current-price" id="displayPrice">45.000đ / Hộp</div>
+                    <div class="price-note">Giá đã bao gồm thuế VAT. Miễn phí giao hàng cho đơn từ 300.000đ.</div>
+                </div>
+                <table class="meta-table">
+                    <tr>
+                        <td class="meta-label">Thành phần:</td>
+                        <td>Paracetamol 500mg</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Công dụng:</td>
+                        <td>Giảm đau, hạ sốt nhẹ</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Lưu ý:</td>
+                        <td>Không dùng khi quá mẫn với thành phần thuốc</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Thuốc cần kê toa:</td>
+                        <td><strong id="rxTextStatus">Không (Có thể mua trực tiếp)</strong></td>
+                    </tr>
+                </table>
+                <div class="option-row">
+                    <div class="option-label">Chọn đơn vị tính:</div>
+                    <div class="unit-buttons">
+                        <button class="unit-btn active" onclick="selectUnit(this, '45.000đ / Hộp')">Hộp (100 viên)</button>
+                        <button class="unit-btn" onclick="selectUnit(this, '5.000đ / Vỉ')">Vỉ (10 viên)</button>
+                    </div>
+                </div>
+                <div class="option-row" id="qtyRow">
+                    <div class="option-label">Số lượng:</div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="updateQty(-1)">-</button>
+                        <input type="text" id="qtyInput" class="qty-input" value="1" readonly>
+                        <button class="qty-btn" onclick="updateQty(1)">+</button>
+                    </div>
+                </div>
+                <div class="rx-warning-box" id="rxWarningBox">
+                    <strong>Lưu ý pháp lý:</strong> Đây là <strong>Thuốc kê đơn (ETC)</strong>. Theo quy định của Bộ Y tế, hệ thống không bán trực tiếp qua giỏ hàng. Vui lòng gửi hình ảnh đơn thuốc hoặc bấm nút bên dưới để Dược sĩ liên hệ tư vấn.
+                </div>
+                <div class="action-group">
+                    <button class="btn-large btn-add-cart" id="btnCart">Thêm vào giỏ</button>
+                    <button class="btn-large btn-buy-now" id="btnBuy">Mua ngay</button>
+                    <button class="btn-large btn-consult-rx" id="btnConsult">Gửi đơn thuốc / Tư vấn với Dược sĩ</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script>
+        function changeImage(thumbElement, imageText) {
+            document.getElementById('mainImage').innerText = imageText;
+            var thumbs = document.querySelectorAll('.thumb-item');
+            thumbs.forEach(function(item) {
+                item.classList.remove('active');
+            });
+            thumbElement.classList.add('active');
+        }
+        function selectUnit(btnElement, priceText) {
+            document.getElementById('displayPrice').innerText = priceText;
+            var buttons = document.querySelectorAll('.unit-btn');
+            buttons.forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            btnElement.classList.add('active');
+        }
+        function updateQty(change) {
+            var input = document.getElementById('qtyInput');
+            var currentQty = parseInt(input.value);
+            var newQty = currentQty + change;
+            if (newQty >= 1) {
+                input.value = newQty;
+            }
+        }
+        var isPrescription = false;
+        function togglePrescriptionMode() {
+            isPrescription = !isPrescription;
+
+            var badgeOTC = document.getElementById('badgeOTC');
+            var badgeRX = document.getElementById('badgeRX');
+            var rxTextStatus = document.getElementById('rxTextStatus');
+            var rxWarningBox = document.getElementById('rxWarningBox');
+            var qtyRow = document.getElementById('qtyRow');
+            var btnCart = document.getElementById('btnCart');
+            var btnBuy = document.getElementById('btnBuy');
+            var btnConsult = document.getElementById('btnConsult');
+            var demoStatus = document.getElementById('demo-status');
+
+            if (isPrescription) {
+                badgeOTC.style.display = 'none';
+                badgeRX.style.display = 'inline-block';
+                rxTextStatus.innerText = 'Có (Chỉ bán khi có đơn thuốc của bác sĩ)';
+                rxTextStatus.style.color = '#d97706';
+                rxWarningBox.style.display = 'block';
+                qtyRow.style.display = 'none';
+                btnCart.style.display = 'none';
+                btnBuy.style.display = 'none';
+                btnConsult.style.display = 'block';
+                demoStatus.innerText = 'Thuốc Kê Đơn (ETC)';
+            } else {
+                badgeOTC.style.display = 'inline-block';
+                badgeRX.style.display = 'none';
+                rxTextStatus.innerText = 'Không (Có thể mua trực tiếp)';
+                rxTextStatus.style.color = '#333';
+                rxWarningBox.style.display = 'none';
+                qtyRow.style.display = 'flex';
+                btnCart.style.display = 'inline-block';
+                btnBuy.style.display = 'inline-block';
+                btnConsult.style.display = 'none';
+                demoStatus.innerText = 'Thuốc Không Kê Đơn (OTC)';
+            }
+        }
+    </script>
+</body>
+</html>
