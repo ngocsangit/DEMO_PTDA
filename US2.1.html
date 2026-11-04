@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiết kế giao diện danh sách thuốc</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: #333;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .header {
+            background-color: #0065ff;
+            color: white;
+            padding: 15px 0;
+            margin-bottom: 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .search-box input {
+            width: 350px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #0065ff;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .category-menu li {
+            margin-bottom: 5px;
+        }
+
+        .category-menu a {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 5px;
+            transition: 0.2s;
+        }
+
+        .category-menu a:hover,
+        .category-menu a.active {
+            background-color: #ebf3ff;
+            color: #0065ff;
+            font-weight: bold;
+        }
+
+        .filter-group {
+            margin-top: 20px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .content {
+            flex: 1;
+        }
+
+        .toolbar {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sort-select {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 15px;
+        }
+
+        /* Thẻ thuốc (Product Card) */
+        .product-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: 0.2s;
+        }
+
+        .product-card:hover {
+            border-color: #0065ff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .badge-otc {
+            background-color: #e6f7ed;
+            color: #00a651;
+        }
+
+        .badge-rx {
+            background-color: #fff4e5;
+            color: #d97706;
+        }
+
+        .product-img {
+            width: 100%;
+            height: 140px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            color: #888;
+            font-size: 13px;
+            border: 1px dashed #ddd;
+        }
+
+        .product-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            height: 40px;
+            overflow: hidden;
+        }
+
+        .product-spec {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 8px;
+        }
+
+        .unit-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .unit-btn {
+            padding: 3px 10px;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .unit-btn.active {
+            border-color: #0065ff;
+            background-color: #ebf3ff;
+            color: #0065ff;
+            font-weight: bold;
+        }
+
+        .product-price {
+            font-size: 16px;
+            font-weight: bold;
+            color: #0065ff;
+            margin-bottom: 10px;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-buy {
+            background-color: #0065ff;
+            color: white;
+        }
+
+        .btn-buy:hover {
+            background-color: #0050cc;
+        }
+
+        .btn-consult {
+            background-color: #fff4e5;
+            color: #d97706;
+            border: 1px solid #f59e0b;
+        }
+
+        .pagination {
+            margin-top: 25px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .page-item {
+            padding: 8px 14px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .page-item:hover {
+            border-color: #0065ff;
+            color: #0065ff;
+        }
+
+        .page-item.active {
+            background-color: #0065ff;
+            color: white;
+            border-color: #0065ff;
+            font-weight: bold;
+        }
+
+        /* Tương thích màn hình nhỏ (Responsive cơ bản) */
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .product-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="container header-content">
+            <div class="logo">PHARMACITY</div>
+            <div class="search-box">
+                <input type="text" placeholder="Tìm tên thuốc, triệu chứng...">
+            </div>
+            <div>Giỏ hàng (0)</div>
+        </div>
+    </header>
+
+    <div class="container main-layout">
+
+        <!-- A. MENU NHÓM THUỐC (SIDEBAR TRÁI) -->
+        <aside class="sidebar">
+            <div class="sidebar-title">DANH MỤC NHÓM THUỐC</div>
+            <ul class="category-menu">
+                <li><a href="#" class="active"><span>Thuốc tiêu hóa</span> <span>(24)</span></a></li>
+                <li><a href="#"><span>Giảm đau, hạ sốt</span> <span>(18)</span></a></li>
+                <li><a href="#"><span>Thuốc hô hấp</span> <span>(15)</span></a></li>
+                <li><a href="#"><span>Vitamin & Khoáng chất</span> <span>(32)</span></a></li>
+                <li><a href="#"><span>Thuốc tim mạch</span> <span>(12)</span></a></li>
+                <li><a href="#"><span>Thuốc da liễu</span> <span>(9)</span></a></li>
+            </ul>
+            <div class="filter-group">
+                <div class="sidebar-title">PHÂN LOẠI THUỐC</div>
+                <label><input type="checkbox" checked> Thuốc không kê đơn (OTC)</label>
+                <label><input type="checkbox" checked> Thuốc kê đơn (ETC)</label>
+                <label><input type="checkbox"> Thực phẩm chức năng</label>
+            </div>
+            <div class="filter-group">
+                <div class="sidebar-title">MỨC GIÁ</div>
+                <label><input type="radio" name="price" checked> Tất cả mức giá</label>
+                <label><input type="radio" name="price"> Dưới 100.000đ</label>
+                <label><input type="radio" name="price"> Từ 100.000đ - 300.000đ</label>
+                <label><input type="radio" name="price"> Trên 300.000đ</label>
+            </div>
+        </aside>
+        <main class="content">
+            <div class="toolbar">
+                <div>Hiển thị <strong>4</strong> trên tổng số <strong>24</strong> sản phẩm</div>
+                <div>
+                    Sắp xếp: 
+                    <select class="sort-select">
+                        <option value="popular">Bán chạy nhất</option>
+                        <option value="price-asc">Giá: Thấp đến Cao</option>
+                        <option value="price-desc">Giá: Cao đến Thấp</option>
+                    </select>
+                </div>
+            </div>
+            <div class="product-grid">
+                <div class="product-card">
+                    <div>
+                        <span class="badge badge-otc">Thuốc không kê đơn</span>
+                        <div class="product-img">[Ảnh thuốc Panadol]</div>
+                        <div class="product-name">Panadol Extra giảm đau, hạ sốt</div>
+                        <div class="product-spec">Quy cách: Hộp 15 vỉ x 12 viên</div>
+                        
+                        <div class="unit-buttons">
+                            <button class="unit-btn active" onclick="changePrice(this, '180.000đ / Hộp')">Hộp</button>
+                            <button class="unit-btn" onclick="changePrice(this, '12.000đ / Vỉ')">Vỉ</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="product-price">180.000đ / Hộp</div>
+                        <button class="btn-action btn-buy">Thêm vào giỏ</button>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <div>
+                        <span class="badge badge-rx">Thuốc kê đơn (Cần tư vấn)</span>
+                        <div class="product-img">[Ảnh thuốc Nexium]</div>
+                        <div class="product-name">Nexium Mups 40mg trị trào ngược dạ dày</div>
+                        <div class="product-spec">Quy cách: Hộp 4 vỉ x 7 viên</div>
+                        
+                        <div class="unit-buttons">
+                            <button class="unit-btn active" onclick="changePrice(this, '295.000đ / Hộp')">Hộp</button>
+                            <button class="unit-btn" onclick="changePrice(this, '75.000đ / Vỉ')">Vỉ</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="product-price">295.000đ / Hộp</div>
+                        <button class="btn-action btn-consult">Cần tư vấn Dược sĩ</button>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <div>
+                        <span class="badge badge-otc">Thuốc không kê đơn</span>
+                        <div class="product-img">[Ảnh Gaviscon]</div>
+                        <div class="product-name">Hỗn dịch Gaviscon giảm đau dạ dày</div>
+                        <div class="product-spec">Quy cách: Hộp 24 gói x 10ml</div>
+                        
+                        <div class="unit-buttons">
+                            <button class="unit-btn active" onclick="changePrice(this, '172.000đ / Hộp')">Hộp</button>
+                            <button class="unit-btn" onclick="changePrice(this, '7.500đ / Gói')">Gói</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="product-price">172.000đ / Hộp</div>
+                        <button class="btn-action btn-buy">Thêm vào giỏ</button>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <div>
+                        <span class="badge badge-otc">Thuốc không kê đơn</span>
+                        <div class="product-img">[Ảnh Berberin]</div>
+                        <div class="product-name">Viên nén Berberin điều trị tiêu chảy</div>
+                        <div class="product-spec">Quy cách: Lọ 100 viên</div>
+                        
+                        <div class="unit-buttons">
+                            <button class="unit-btn active">Lọ</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="product-price">45.000đ / Lọ</div>
+                        <button class="btn-action btn-buy">Thêm vào giỏ</button>
+                    </div>
+                </div>
+            </div>
+            <div class="pagination">
+                <a href="?page=1" class="page-item">« Trước</a>
+                <a href="?page=1" class="page-item active">1</a>
+                <a href="?page=2" class="page-item">2</a>
+                <a href="?page=3" class="page-item">3</a>
+                <a href="?page=4" class="page-item">4</a>
+                <a href="?page=2" class="page-item">Sau »</a>
+            </div>
+
+        </main>
+    </div>
+    <script>
+        function changePrice(buttonElement, newPriceText) {
+            var card = buttonElement.closest('.product-card');
+            var allButtons = card.querySelectorAll('.unit-btn');
+            allButtons.forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            buttonElement.classList.add('active');
+            var priceElement = card.querySelector('.product-price');
+            priceElement.innerText = newPriceText;
+        }
+    </script>
+
+</body>
+</html>

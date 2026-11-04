@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang chi tiết thuốc</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: #333;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .header {
+            background-color: #0065ff;
+            color: white;
+            padding: 15px 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .search-box input {
+            width: 350px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .breadcrumb {
+            padding: 12px 0;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .breadcrumb a:hover {
+            color: #0065ff;
+        }
+
+        .demo-bar {
+            background-color: #e0ebff;
+            border: 1px dashed #0065ff;
+            padding: 8px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .demo-btn {
+            background-color: #0065ff;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .product-detail-card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 25px;
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .product-gallery {
+            width: 40%;
+            flex-shrink: 0;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 320px;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #666;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .thumb-list {
+            display: flex;
+            gap: 10px;
+        }
+
+        .thumb-item {
+            width: 70px;
+            height: 70px;
+            background-color: #f8f9fa;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            text-align: center;
+            color: #666;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .thumb-item.active {
+            border: 2px solid #0065ff;
+            color: #0065ff;
+            font-weight: bold;
+        }
+
+        .product-summary {
+            flex: 1;
+        }
+
+        .badge-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .badge-otc {
+            background-color: #e6f7ed;
+            color: #00a651;
+        }
+
+        .badge-rx {
+            background-color: #fff4e5;
+            color: #d97706;
+            display: none;
+        }
+
+        .badge-brand {
+            background-color: #ebf3ff;
+            color: #0065ff;
+        }
+
+        .product-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 6px;
+        }
+
+        .product-code {
+            font-size: 13px;
+            color: #777;
+            margin-bottom: 15px;
+        }
+
+        .price-box {
+            background-color: #f8fafd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #0065ff;
+            margin-bottom: 18px;
+        }
+
+        .current-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0065ff;
+        }
+
+        .price-note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .meta-table {
+            width: 100%;
+            margin-bottom: 18px;
+            border-collapse: collapse;
+        }
+
+        .meta-table td {
+            padding: 6px 0;
+            vertical-align: top;
+        }
+
+        .meta-label {
+            width: 150px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .option-label {
+            width: 150px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .unit-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .unit-btn {
+            padding: 6px 16px;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .unit-btn.active {
+            border-color: #0065ff;
+            background-color: #ebf3ff;
+            color: #0065ff;
+            font-weight: bold;
+        }
+
+        .qty-control {
+            display: flex;
+            align-items: center;
+        }
+
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #ccc;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .qty-input {
+            width: 50px;
+            height: 32px;
+            text-align: center;
+            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+            border-left: none;
+            border-right: none;
+        }
+
+        .rx-warning-box {
+            display: none;
+            background-color: #fff8eb;
+            border: 1px solid #f59e0b;
+            color: #b45309;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-large {
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-add-cart {
+            background-color: #ebf3ff;
+            color: #0065ff;
+            border: 1px solid #0065ff;
+        }
+
+        .btn-buy-now {
+            background-color: #0065ff;
+            color: white;
+        }
+
+        .btn-consult-rx {
+            display: none;
+            background-color: #d97706;
+            color: white;
+            width: 100%;
+        }
+
+        .info-section {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 25px;
+            margin-bottom: 40px;
+        }
+
+        .info-tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .tab-link {
+            padding: 10px 18px;
+            font-weight: bold;
+            color: #555;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-link:hover,
+        .tab-link.active {
+            color: #0065ff;
+            border-bottom-color: #0065ff;
+        }
+
+        .content-block {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        .content-block:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .content-title {
+            font-size: 17px;
+            font-weight: bold;
+            color: #0065ff;
+            margin-bottom: 12px;
+            border-left: 4px solid #0065ff;
+            padding-left: 10px;
+        }
+
+        .ingredient-table {
+            width: 100%;
+            max-width: 600px;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .ingredient-table th,
+        .ingredient-table td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .ingredient-table th {
+            background-color: #f4f6f8;
+        }
+
+        .content-list {
+            padding-left: 20px;
+        }
+
+        .content-list li {
+            margin-bottom: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .product-detail-card { flex-direction: column; }
+            .product-gallery { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <a href="index.html" class="logo">PHARMACITY</a>
+            <div class="search-box">
+                <input type="text" placeholder="Tìm tên thuốc, hoạt chất, triệu chứng...">
+            </div>
+            <div>Giỏ hàng (1)</div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="index.html">Trang chủ</a> &raquo; 
+            <a href="index.html">Thuốc giảm đau, hạ sốt</a> &raquo; 
+            <strong>Panadol Extra (Hộp 15 vỉ x 12 viên)</strong>
+        </div>
+        <div class="demo-bar">
+            <span><strong>Chế độ kiểm thử đồ án:</strong> Đang hiển thị giao diện <u id="demo-status">Thuốc Không Kê Đơn (OTC)</u></span>
+            <button class="demo-btn" onclick="togglePrescriptionMode()">Chuyển sang Thuốc Kê Đơn (ETC)</button>
+        </div>
+        <div class="product-detail-card">
+            <div class="product-gallery">
+                <div class="main-image" id="mainImage">
+                </div>
+                <div class="thumb-list">
+                    <div class="thumb-item active" onclick="changeImage(this, '[Hình ảnh Mặt trước Hộp thuốc]')">Mặt trước</div>
+                    <div class="thumb-item" onclick="changeImage(this, '[Hình ảnh Vỉ thuốc bên trong]')">Vỉ thuốc</div>
+                    <div class="thumb-item" onclick="changeImage(this, '[Hình ảnh Nhãn phụ Tiếng Việt]')">Nhãn thuốc</div>
+                    <div class="thumb-item" onclick="changeImage(this, '[Hình ảnh Toa hướng dẫn sử dụng]')">Toa thuốc</div>
+                </div>
+            </div>
+            <div class="product-summary">
+            
+                <div class="badge-group">
+                    <span class="badge badge-otc" id="badgeOTC">Thuốc không kê đơn (OTC)</span>
+                    <span class="badge badge-rx" id="badgeRX">Thuốc kê đơn (ETC - Cần đơn bác sĩ)</span>
+                    <span class="badge badge-brand">Thương hiệu: GSK</span>
+                </div>
+
+                <h1 class="product-title">Viên nén Panadol Extra giảm đau, hạ sốt (Hộp 15 vỉ x 12 viên)</h1>
+                <div class="product-code">Mã sản phẩm: PMC00124 | Số đăng ký: VD-21548-14</div>
+                <div class="price-box">
+                    <div class="current-price" id="displayPrice">180.000đ / Hộp</div>
+                    <div class="price-note">Giá đã bao gồm thuế VAT. Miễn phí giao hàng cho đơn từ 300.000đ.</div>
+                </div>
+                <table class="meta-table">
+                    <tr>
+                        <td class="meta-label">Danh mục:</td>
+                        <td>Thuốc giảm đau, hạ sốt, kháng viêm</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Dạng bào chế:</td>
+                        <td>Viên nén bao phim</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Quy cách đóng gói:</td>
+                        <td>Hộp 15 vỉ x 12 viên</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Thuốc cần kê toa:</td>
+                        <td><strong id="rxTextStatus">Không (Có thể mua trực tiếp)</strong></td>
+                    </tr>
+                </table>
+                <div class="option-row">
+                    <div class="option-label">Chọn đơn vị tính:</div>
+                    <div class="unit-buttons">
+                        <button class="unit-btn active" onclick="selectUnit(this, '180.000đ / Hộp')">Hộp (180 viên)</button>
+                        <button class="unit-btn" onclick="selectUnit(this, '12.500đ / Vỉ')">Vỉ (12 viên)</button>
+                    </div>
+                </div>
+                <div class="option-row" id="qtyRow">
+                    <div class="option-label">Số lượng:</div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="updateQty(-1)">-</button>
+                        <input type="text" id="qtyInput" class="qty-input" value="1" readonly>
+                        <button class="qty-btn" onclick="updateQty(1)">+</button>
+                    </div>
+                </div>
+                <div class="rx-warning-box" id="rxWarningBox">
+                    <strong>Lưu ý pháp lý:</strong> Đây là <strong>Thuốc kê đơn (ETC)</strong>. Theo quy định của Bộ Y tế, hệ thống không bán trực tiếp qua giỏ hàng. Vui lòng gửi hình ảnh đơn thuốc hoặc bấm nút bên dưới để Dược sĩ liên hệ tư vấn.
+                </div>
+                <div class="action-group">
+                    <!-- Nút cho thuốc không kê đơn (OTC) -->
+                    <button class="btn-large btn-add-cart" id="btnCart">Thêm vào giỏ hàng</button>
+                    <button class="btn-large btn-buy-now" id="btnBuy">Mua ngay</button>
+                    <button class="btn-large btn-consult-rx" id="btnConsult">Gửi đơn thuốc / Tư vấn với Dược sĩ</button>
+                </div>
+
+            </div>
+        </div>
+        <div class="info-section">
+            
+            <div class="info-tabs">
+                <a href="#thanh-phan" class="tab-link active">1. Thành phần</a>
+                <a href="#cong-dung" class="tab-link">2. Công dụng (Chỉ định)</a>
+                <a href="#lieu-dung" class="tab-link">3. Liều dùng & Cách dùng</a>
+                <a href="#nhan-thuoc" class="tab-link">4. Thông tin Nhãn thuốc & Bảo quản</a>
+            </div>
+            <div id="thanh-phan" class="content-block">
+                <h2 class="content-title">1. Thành phần hoạt chất</h2>
+                <p>Mỗi viên nén bao phim chứa các thành phần dược chất chính sau:</p>
+                <table class="ingredient-table">
+                    <thead>
+                        <tr>
+                            <th>Tên hoạt chất</th>
+                            <th>Hàm lượng</th>
+                            <th>Vai trò tác dụng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Paracetamol</strong></td>
+                            <td>500 mg</td>
+                            <td>Giảm đau, hạ sốt</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Caffeine</strong></td>
+                            <td>65 mg</td>
+                            <td>Tăng cường tác dụng giảm đau của Paracetamol</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 8px; color: #666;"><em>Tá dược: Tinh bột ngô, Povidone, Kali sorbate, Talc, Stearic acid vừa đủ 1 viên.</em></p>
+            </div>
+            <div id="cong-dung" class="content-block">
+                <h2 class="content-title">2. Công dụng (Chỉ định)</h2>
+                <p>Thuốc được chỉ định điều trị các triệu chứng đau từ nhẹ đến vừa và hạ sốt trong các trường hợp:</p>
+                <ul class="content-list">
+                    <li>Đau đầu, đau nửa đầu, đau thắt lưng.</li>
+                    <li>Đau răng, đau sau khi thực hiện các thủ thuật nha khoa.</li>
+                    <li>Đau nhức cơ xương khớp, đau bụng kinh.</li>
+                    <li>Hạ sốt và giảm các triệu chứng đau họng, mệt mỏi do cảm lạnh, cảm cúm.</li>
+                </ul>
+            </div>
+            <div id="lieu-dung" class="content-block">
+                <h2 class="content-title">3. Liều dùng & Cách dùng</h2>
+                <p><strong>Cách dùng:</strong> Dùng đường uống với một cốc nước đầy. Có thể uống cùng hoặc không cùng thức ăn.</p>
+                <ul class="content-list" style="margin-top: 8px;">
+                    <li><strong>Người lớn và trẻ em từ 12 tuổi trở lên:</strong> Uống 1 - 2 viên mỗi 4 đến 6 giờ nếu cần.</li>
+                    <li><strong>Liều tối đa:</strong> Không uống quá 8 viên (4000mg Paracetamol) trong vòng 24 giờ.</li>
+                    <li><strong>Khoảng cách tối thiểu giữa 2 lần uống:</strong> 4 giờ.</li>
+                    <li><strong>Trẻ em dưới 12 tuổi:</strong> Không khuyến cáo sử dụng trừ khi có chỉ định của bác sĩ.</li>
+                </ul>
+            </div>
+            <div id="nhan-thuoc" class="content-block">
+                <h2 class="content-title">4. Thông tin Nhãn thuốc & Bảo quản</h2>
+                <ul class="content-list">
+                    <li><strong>Số đăng ký lưu hành (SĐK):</strong> VD-21548-14 (Cục Quản lý Dược - Bộ Y tế cấp).</li>
+                    <li><strong>Nhà sản xuất:</strong> Công ty Dược phẩm Sanofi / GSK.</li>
+                    <li><strong>Nước sản xuất:</strong> Việt Nam.</li>
+                    <li><strong>Tiêu chuẩn chất lượng:</strong> Tiêu chuẩn cơ sở (TCCS).</li>
+                    <li><strong>Hạn sử dụng:</strong> 36 tháng kể từ ngày sản xuất (in trên bao bì hộp và mép vỉ thuốc).</li>
+                    <li><strong>Điều kiện bảo quản:</strong> Bảo quản nơi khô ráo, thoáng mát, nhiệt độ dưới 30°C, tránh ánh sáng trực tiếp. Để xa tầm tay trẻ em.</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+    <script>
+        function changeImage(thumbElement, imageText) {
+            document.getElementById('mainImage').innerText = imageText;
+            var thumbs = document.querySelectorAll('.thumb-item');
+            thumbs.forEach(function(item) {
+                item.classList.remove('active');
+            });
+            thumbElement.classList.add('active');
+        }
+        function selectUnit(btnElement, priceText) {
+            document.getElementById('displayPrice').innerText = priceText;
+            var buttons = document.querySelectorAll('.unit-btn');
+            buttons.forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            btnElement.classList.add('active');
+        }
+        function updateQty(change) {
+            var input = document.getElementById('qtyInput');
+            var currentQty = parseInt(input.value);
+            var newQty = currentQty + change;
+            if (newQty >= 1) {
+                input.value = newQty;
+            }
+        }
+        var isPrescription = false;
+        function togglePrescriptionMode() {
+            isPrescription = !isPrescription;
+
+            var badgeOTC = document.getElementById('badgeOTC');
+            var badgeRX = document.getElementById('badgeRX');
+            var rxTextStatus = document.getElementById('rxTextStatus');
+            var rxWarningBox = document.getElementById('rxWarningBox');
+            var qtyRow = document.getElementById('qtyRow');
+            var btnCart = document.getElementById('btnCart');
+            var btnBuy = document.getElementById('btnBuy');
+            var btnConsult = document.getElementById('btnConsult');
+            var demoStatus = document.getElementById('demo-status');
+
+            if (isPrescription) {
+                badgeOTC.style.display = 'none';
+                badgeRX.style.display = 'inline-block';
+                rxTextStatus.innerText = 'Có (Chỉ bán khi có đơn thuốc của bác sĩ)';
+                rxTextStatus.style.color = '#d97706';
+                rxWarningBox.style.display = 'block';
+                qtyRow.style.display = 'none';
+                btnCart.style.display = 'none';
+                btnBuy.style.display = 'none';
+                btnConsult.style.display = 'block';
+                demoStatus.innerText = 'Thuốc Kê Đơn (ETC)';
+            } else {
+                badgeOTC.style.display = 'inline-block';
+                badgeRX.style.display = 'none';
+                rxTextStatus.innerText = 'Không (Có thể mua trực tiếp)';
+                rxTextStatus.style.color = '#333';
+                rxWarningBox.style.display = 'none';
+                qtyRow.style.display = 'flex';
+                btnCart.style.display = 'inline-block';
+                btnBuy.style.display = 'inline-block';
+                btnConsult.style.display = 'none';
+                demoStatus.innerText = 'Thuốc Không Kê Đơn (OTC)';
+            }
+        }
+    </script>
+</body>
+</html>

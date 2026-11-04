@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giao diện trang quản lí thuốc</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: #333;
+            font-size: 14px;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .admin-sidebar {
+            width: 240px;
+            background-color: #003d99; /* Xanh đậm cho Admin */
+            color: white;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-logo {
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #002b6b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-menu {
+            list-style: none;
+            padding: 15px 0;
+        }
+
+        .admin-menu li a {
+            display: block;
+            padding: 12px 20px;
+            color: #d0e1fd;
+            transition: 0.2s;
+        }
+
+        .admin-menu li a:hover,
+        .admin-menu li a.active {
+            background-color: #0065ff;
+            color: white;
+            font-weight: bold;
+            border-left: 4px solid #00a651;
+        }
+
+        .admin-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .admin-topbar {
+            background: white;
+            padding: 15px 25px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .admin-user {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .admin-content {
+            padding: 20px 25px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            border-left: 4px solid #0065ff;
+        }
+
+        .stat-card.otc { border-left-color: #00a651; }
+        .stat-card.rx { border-left-color: #d97706; }
+        .stat-card.out { border-left-color: #dc2626; }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .filter-bar {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-inputs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .form-control {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 13px;
+            background: white;
+        }
+
+        .search-input {
+            width: 240px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background-color: #0065ff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0050cc;
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            overflow: hidden;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+        .data-table th {
+            background-color: #f8fafd;
+            color: #444;
+            font-weight: bold;
+            font-size: 13px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .data-table tr:hover {
+            background-color: #f9fbff;
+        }
+
+        .td-img {
+            width: 48px;
+            height: 48px;
+            background-color: #f0f2f5;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #777;
+            text-align: center;
+        }
+
+        .drug-name {
+            font-weight: bold;
+            color: #0065ff;
+            margin-bottom: 3px;
+            display: block;
+        }
+
+        .drug-sub {
+            font-size: 12px;
+            color: #777;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        .badge-otc {
+            background-color: #e6f7ed;
+            color: #00a651;
+        }
+
+        .badge-rx {
+            background-color: #fff4e5;
+            color: #d97706;
+            border: 1px solid #fbd38d;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .btn-edit {
+            background-color: #ebf3ff;
+            color: #0065ff;
+            border-color: #b3d1ff;
+        }
+
+        .btn-delete {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+
+        .table-footer {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fafafa;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 5px;
+        }
+
+        .page-btn {
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .page-btn.active {
+            background-color: #0065ff;
+            color: white;
+            border-color: #0065ff;
+            font-weight: bold;
+        }
+
+        .modal-overlay {
+            display: none; /* Mặc định ẩn */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-box {
+            background: white;
+            width: 650px;
+            max-width: 95%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: #0065ff;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            font-size: 13px;
+            color: #444;
+        }
+
+        .modal-footer {
+            padding: 12px 20px;
+            background: #f4f6f8;
+            text-align: right;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <aside class="admin-sidebar">
+        <div class="admin-logo">PHARMACITY ADMIN</div>
+        <ul class="admin-menu">
+            <li><a href="#">Tổng quan hệ thống</a></li>
+            <li><a href="admin-products.html" class="active">Quản lý Thuốc</a></li>
+            <li><a href="#">Quản lý Nhóm thuốc</a></li>
+            <li><a href="#">Quản lý Nhà sản xuất</a></li>
+            <li><a href="#">Duyệt Đơn thuốc (ETC)</a></li>
+            <li><a href="#">Quản lý Đơn hàng</a></li>
+            <li><a href="index.html" target="_blank">&raquo; Xem trang Khách hàng</a></li>
+        </ul>
+    </aside>
+    <div class="admin-main">
+        <header class="admin-topbar">
+            <div class="page-title">Quản lý Danh mục Thuốc</div>
+            <div class="admin-user">Xin chào, <strong>Dược sĩ Quản trị</strong> | <a href="#" style="color:#0065ff;">Đăng xuất</a></div>
+        </header>
+        <div class="admin-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">TỔNG SỐ ĐẦU THUỐC</div>
+                    <div class="stat-value" id="totalCount">5</div>
+                </div>
+                <div class="stat-card otc">
+                    <div class="stat-label">THUỐC KHÔNG KÊ ĐƠN (OTC)</div>
+                    <div class="stat-value">3</div>
+                </div>
+                <div class="stat-card rx">
+                    <div class="stat-label">THUỐC KÊ ĐƠN (ETC)</div>
+                    <div class="stat-value">2</div>
+                </div>
+                <div class="stat-card out">
+                    <div class="stat-label">SẮP HẾT HÀNG (&le; 10 HỘP)</div>
+                    <div class="stat-value">1</div>
+                </div>
+            </div>
+            <div class="filter-bar">
+                <div class="filter-inputs">
+                    <input type="text" id="searchInput" class="form-control search-input" placeholder="Tìm mã thuốc, tên thuốc..." onkeyup="filterTable()">
+                    <select id="filterCategory" class="form-control" onchange="filterTable()">
+                        <option value="ALL">-- Tất cả Nhóm thuốc --</option>
+                        <option value="Thuốc tiêu hóa">Thuốc tiêu hóa</option>
+                        <option value="Giảm đau, hạ sốt">Giảm đau, hạ sốt</option>
+                        <option value="Kháng sinh">Kháng sinh</option>
+                        <option value="Vitamin & Khoáng chất">Vitamin & Khoáng chất</option>
+                    </select>
+                    <select id="filterManufacturer" class="form-control" onchange="filterTable()">
+                        <option value="ALL">-- Tất cả Nhà sản xuất --</option>
+                        <option value="GSK">GSK (Anh)</option>
+                        <option value="AstraZeneca">AstraZeneca (Thụy Điển)</option>
+                        <option value="Sanofi">Sanofi (Pháp)</option>
+                        <option value="Dược Hậu Giang">Dược Hậu Giang (VN)</option>
+                        <option value="Traphaco">Traphaco (VN)</option>
+                    </select>
+                    <select id="filterPrescription" class="form-control" onchange="filterTable()">
+                        <option value="ALL">-- Tất cả Loại kê đơn --</option>
+                        <option value="OTC">Thuốc không kê đơn (OTC)</option>
+                        <option value="ETC">Thuốc kê đơn (ETC)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="openModal()">+ Thêm thuốc mới</button>
+            </div>
+            <div class="table-card">
+                <table class="data-table" id="drugTable">
+                    <thead>
+                        <tr>
+                            <th width="80">Mã thuốc</th>
+                            <th width="65">Hình ảnh</th>
+                            <th>Tên thuốc & Quy cách</th>
+                            <th>Nhóm thuốc</th>
+                            <th>Nhà sản xuất</th>
+                            <th>Loại kê đơn</th>
+                            <th>Giá bán (ĐVT)</th>
+                            <th>Tồn kho</th>
+                            <th width="120">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="drugTableBody">
+                        <tr data-category="Giảm đau, hạ sốt" data-manufacturer="GSK" data-rx="OTC">
+                            <td><strong>PMC001</strong></td>
+                            <td><div class="td-img">[Ảnh]</div></td>
+                            <td>
+                                <a href="detail.html" class="drug-name">Panadol Extra giảm đau, hạ sốt</a>
+                                <div class="drug-sub">SĐK: VD-21548-14 | Hộp 15 vỉ x 12 viên</div>
+                            </td>
+                            <td>Giảm đau, hạ sốt</td>
+                            <td>GSK <br><span class="drug-sub">(Việt Nam / Anh)</span></td>
+                            <td><span class="badge badge-otc">Không kê đơn (OTC)</span></td>
+                            <td><strong>180.000đ</strong> / Hộp</td>
+                            <td>120</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn-sm btn-edit" onclick="alert('Mở form sửa mã PMC001')">Sửa</button>
+                                    <button class="btn-sm btn-delete" onclick="deleteRow(this)">Xóa</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr data-category="Thuốc tiêu hóa" data-manufacturer="AstraZeneca" data-rx="ETC">
+                            <td><strong>PMC002</strong></td>
+                            <td><div class="td-img">[Ảnh]</div></td>
+                            <td>
+                                <a href="detail.html" class="drug-name">Nexium Mups 40mg trị trào ngược dạ dày</a>
+                                <div class="drug-sub">SĐK: VN-19782-16 | Hộp 4 vỉ x 7 viên</div>
+                            </td>
+                            <td>Thuốc tiêu hóa</td>
+                            <td>AstraZeneca <br><span class="drug-sub">(Thụy Điển)</span></td>
+                            <td><span class="badge badge-rx">Thuốc kê đơn (ETC)</span></td>
+                            <td><strong>295.000đ</strong> / Hộp</td>
+                            <td>45</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn-sm btn-edit" onclick="alert('Mở form sửa mã PMC002')">Sửa</button>
+                                    <button class="btn-sm btn-delete" onclick="deleteRow(this)">Xóa</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr data-category="Kháng sinh" data-manufacturer="GSK" data-rx="ETC">
+                            <td><strong>PMC003</strong></td>
+                            <td><div class="td-img">[Ảnh]</div></td>
+                            <td>
+                                <a href="detail.html" class="drug-name">Kháng sinh Augmentin 1g (Amoxicillin + Acid Clavulanic)</a>
+                                <div class="drug-sub">SĐK: VN-20511-17 | Hộp 2 vỉ x 7 viên</div>
+                            </td>
+                            <td>Kháng sinh</td>
+                            <td>GSK <br><span class="drug-sub">(Anh Quốc)</span></td>
+                            <td><span class="badge badge-rx">Thuốc kê đơn (ETC)</span></td>
+                            <td><strong>310.000đ</strong> / Hộp</td>
+                            <td><strong style="color:#dc2626;">8 (Sắp hết)</strong></td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn-sm btn-edit" onclick="alert('Mở form sửa mã PMC003')">Sửa</button>
+                                    <button class="btn-sm btn-delete" onclick="deleteRow(this)">Xóa</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr data-category="Thuốc tiêu hóa" data-manufacturer="Sanofi" data-rx="OTC">
+                            <td><strong>PMC004</strong></td>
+                            <td><div class="td-img">[Ảnh]</div></td>
+                            <td>
+                                <a href="detail.html" class="drug-name">Men vi sinh Enterogermina 2 tỷ bào tử</a>
+                                <div class="drug-sub">SĐK: VN-18452-14 | Hộp 20 ống x 5ml</div>
+                            </td>
+                            <td>Thuốc tiêu hóa</td>
+                            <td>Sanofi <br><span class="drug-sub">(Ý / Pháp)</span></td>
+                            <td><span class="badge badge-otc">Không kê đơn (OTC)</span></td>
+                            <td><strong>165.000đ</strong> / Hộp</td>
+                            <td>85</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn-sm btn-edit" onclick="alert('Mở form sửa mã PMC004')">Sửa</button>
+                                    <button class="btn-sm btn-delete" onclick="deleteRow(this)">Xóa</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr data-category="Giảm đau, hạ sốt" data-manufacturer="Dược Hậu Giang" data-rx="OTC">
+                            <td><strong>PMC005</strong></td>
+                            <td><div class="td-img">[Ảnh]</div></td>
+                            <td>
+                                <a href="detail.html" class="drug-name">Bột sủi Hapacol 250mg hạ sốt trẻ em</a>
+                                <div class="drug-sub">SĐK: VD-25410-16 | Hộp 24 gói x 1.5g</div>
+                            </td>
+                            <td>Giảm đau, hạ sốt</td>
+                            <td>Dược Hậu Giang <br><span class="drug-sub">(Việt Nam)</span></td>
+                            <td><span class="badge badge-otc">Không kê đơn (OTC)</span></td>
+                            <td><strong>38.000đ</strong> / Hộp</td>
+                            <td>200</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn-sm btn-edit" onclick="alert('Mở form sửa mã PMC005')">Sửa</button>
+                                    <button class="btn-sm btn-delete" onclick="deleteRow(this)">Xóa</button>
+                                </div>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+                <div class="table-footer">
+                    <div>Hiển thị <strong>1 - 5</strong> trong tổng số <strong>5</strong> đầu thuốc</div>
+                    <div class="pagination">
+                        <button class="page-btn">&laquo; Trước</button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn">2</button>
+                        <button class="page-btn">3</button>
+                        <button class="page-btn">Sau &raquo;</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="modal-overlay" id="productModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>Thêm Thuốc Mới Vào Hệ Thống</span>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Mã thuốc (*):</label>
+                        <input type="text" id="newCode" class="form-control" value="PMC006">
+                    </div>
+                    <div class="form-group">
+                        <label>Số đăng ký (SĐK Bộ Y tế):</label>
+                        <input type="text" id="newSDK" class="form-control" placeholder="VD: VD-12345-20">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Tên thuốc (*):</label>
+                        <input type="text" id="newName" class="form-control" placeholder="Nhập tên đầy đủ của thuốc...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nhóm thuốc (*):</label>
+                        <select id="newCategory" class="form-control">
+                            <option value="Thuốc tiêu hóa">Thuốc tiêu hóa</option>
+                            <option value="Giảm đau, hạ sốt">Giảm đau, hạ sốt</option>
+                            <option value="Kháng sinh">Kháng sinh</option>
+                            <option value="Vitamin & Khoáng chất">Vitamin & Khoáng chất</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nhà sản xuất (*):</label>
+                        <select id="newManufacturer" class="form-control">
+                            <option value="GSK">GSK (Anh)</option>
+                            <option value="AstraZeneca">AstraZeneca (Thụy Điển)</option>
+                            <option value="Sanofi">Sanofi (Pháp)</option>
+                            <option value="Dược Hậu Giang">Dược Hậu Giang (VN)</option>
+                            <option value="Traphaco">Traphaco (VN)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Trường Loại kê đơn (*):</label>
+                        <select id="newRxType" class="form-control">
+                            <option value="OTC">Thuốc không kê đơn (OTC - Bán trực tiếp)</option>
+                            <option value="ETC">Thuốc kê đơn (ETC - Cần đơn bác sĩ)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quy cách đóng gói:</label>
+                        <input type="text" id="newSpec" class="form-control" placeholder="VD: Hộp 10 vỉ x 10 viên">
+                    </div>
+                    <div class="form-group">
+                        <label>Giá bán (VNĐ / Hộp) (*):</label>
+                        <input type="text" id="newPrice" class="form-control" placeholder="VD: 125.000đ">
+                    </div>
+                    <div class="form-group">
+                        <label>Số lượng tồn kho ban đầu:</label>
+                        <input type="number" id="newStock" class="form-control" value="50">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" onclick="closeModal()">Hủy bỏ</button>
+                <button class="btn btn-primary" onclick="addNewDrug()">Lưu thông tin thuốc</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function filterTable() {
+            var keyword = document.getElementById('searchInput').value.toLowerCase();
+            var category = document.getElementById('filterCategory').value;
+            var manufacturer = document.getElementById('filterManufacturer').value;
+            var rxType = document.getElementById('filterPrescription').value;
+            var rows = document.querySelectorAll('#drugTableBody tr');
+            rows.forEach(function(row) {
+                var textContent = row.innerText.toLowerCase();
+                var rowCategory = row.getAttribute('data-category');
+                var rowManufacturer = row.getAttribute('data-manufacturer');
+                var rowRx = row.getAttribute('data-rx');
+                var matchKeyword = textContent.indexOf(keyword) > -1;
+                var matchCategory = (category === 'ALL' || rowCategory === category);
+                var matchManufacturer = (manufacturer === 'ALL' || rowManufacturer === manufacturer);
+                var matchRx = (rxType === 'ALL' || rowRx === rxType);
+                if (matchKeyword && matchCategory && matchManufacturer && matchRx) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        function openModal() {
+            document.getElementById('productModal').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('productModal').style.display = 'none';
+        }
+        function addNewDrug() {
+            var code = document.getElementById('newCode').value;
+            var sdk = document.getElementById('newSDK').value || 'Đang cập nhật';
+            var name = document.getElementById('newName').value;
+            var category = document.getElementById('newCategory').value;
+            var manufacturer = document.getElementById('newManufacturer').value;
+            var rxType = document.getElementById('newRxType').value;
+            var spec = document.getElementById('newSpec').value || 'Hộp tiêu chuẩn';
+            var price = document.getElementById('newPrice').value || '100.000đ';
+            var stock = document.getElementById('newStock').value;
+            if (!name) {
+                alert('Vui lòng nhập Tên thuốc!');
+                return;
+            }
+            var badgeHtml = (rxType === 'OTC') 
+                ? '<span class="badge badge-otc">Không kê đơn (OTC)</span>'
+                : '<span class="badge badge-rx">Thuốc kê đơn (ETC)</span>';
+            var tbody = document.getElementById('drugTableBody');
+            var newRow = document.createElement('tr');
+            newRow.setAttribute('data-category', category);
+            newRow.setAttribute('data-manufacturer', manufacturer);
+            newRow.setAttribute('data-rx', rxType);
+            newRow.innerHTML = `
+                <td><strong>${code}</strong></td>
+                <td><div class="td-img">[Ảnh]</div></td>
+                <td>
+                    <a href="detail.html" class="drug-name">${name}</a>
+                    <div class="drug-sub">SĐK: ${sdk} | ${spec}</div>
+                </td>
+                <td>${category}</td>
+                <td>${manufacturer}</td>
+                <td>${badgeHtml}</td>
+                <td><strong>${price}</strong> / Hộp</td>
+                <td>${stock}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-sm btn-edit" onclick="alert('Mở form sửa mã ${code}')">Sửa</button>
+                        <button class="btn-sm btn-delete" onclick="deleteRow(this)">Xóa</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(newRow);
+            closeModal();
+            var totalEl = document.getElementById('totalCount');
+            totalEl.innerText = parseInt(totalEl.innerText) + 1;
+        }
+        function deleteRow(btnElement) {
+            if (confirm('Bạn có chắc chắn muốn xóa thuốc này khỏi danh mục?')) {
+                var row = btnElement.closest('tr');
+                row.remove();
+                var totalEl = document.getElementById('totalCount');
+                totalEl.innerText = parseInt(totalEl.innerText) - 1;
+            }
+        }
+    </script>
+
+</body>
+</html>
