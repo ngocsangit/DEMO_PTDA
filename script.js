@@ -22,17 +22,61 @@ let cats=ls.get("cats",[["Giảm đau, hạ sốt","Các thuốc giảm đau h�
 let users=ls.get("users",[]),sess=ls.get("sess",null),lock=ls.get("lock",{n:0,until:0});
 let F={cat:"Tất cả",kw:"",max:100000,rx:true,otc:true,forms:[],maker:"",sort:"pop",page:1,sel:3,qty:1,open:false},cq="",coupon=0,aq="",authErr={},loginMsg="";
 const user=()=>users.find(u=>u.email==sess);
-const ckey=()=>"cart:"+(sess||"guest");let cart=ls.get(ckey(),{});
-const saveCart=()=>ls.set(ckey(),cart),byId=id=>DATA.find(d=>d.id==id);
+const byId=id=>DATA.find(d=>d.id==id);
+
+const MAXQ=10,now=()=>new Date().toISOString();
+let gt=ls.get("guest_token",null);if(!gt){gt="g"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);ls.set("guest_token",gt)}
+const DB={t:{carts:ls.get("tbl_carts",[]),cart_items:ls.get("tbl_cart_items",[])},
+ save(){ls.set("tbl_carts",this.t.carts);ls.set("tbl_cart_items",this.t.cart_items)},
+ id(tb){return Math.max(0,...this.t[tb].map(r=>r.id))+1}};
+const CartAPI={
+ _own(){return sess?{email:sess}:{token:gt}},
+ _find(o){return DB.t.carts.find(c=>c.status=="active"&&(o.email?c.user_email==o.email:c.guest_token==o.token))},
+ _cart(o){let c=this._find(o);if(!c){const t=now();c={id:DB.id("carts"),user_email:o.email||null,guest_token:o.email?null:o.token,status:"active",created_at:t,updated_at:t};DB.t.carts.push(c)}return c},
+ _line(c,pid){return c&&DB.t.cart_items.find(i=>i.cart_id==c.id&&i.product_id==pid)},
+ _check(d,q){if(!Number.isInteger(q)||q<1||q>MAXQ)return this._err(400,"Số lượng mỗi sản phẩm phải từ 1 đến "+MAXQ);if(!d.stock)return this._err(409,"Sản phẩm đã hết hàng");if(q>d.stock)return this._err(409,"Vượt quá tồn kho ("+d.stock+")");return null},
+ _ok(m,st){return{...this.get(),status:st||200,message:m}},
+ _err(st,m){return{...this.get(),ok:false,status:st,message:m}},
+
+ get(){const c=this._find(this._own()),rows=c?DB.t.cart_items.filter(i=>i.cart_id==c.id):[];
+  const items=rows.map(i=>{const d=byId(i.product_id);return{product_id:i.product_id,name:d.name,unit:d.unit,rx:d.rx,stock:d.stock,max:Math.min(MAXQ,d.stock),unit_price:i.unit_price,quantity:i.quantity,line_total:i.unit_price*i.quantity}});
+  const subtotal=items.reduce((a,i)=>a+i.line_total,0),shipping=!subtotal||subtotal>=200000?0:20000,discount=Math.round(subtotal*coupon),count=items.reduce((a,i)=>a+i.quantity,0);
+  return{ok:true,status:200,message:"OK",data:{items,count,subtotal,shipping,discount,total:subtotal+shipping-discount}}},
+ qty(pid){const l=this._line(this._find(this._own()),pid);return l?l.quantity:0},
+
+ add(pid,n){const d=byId(pid);if(!d)return this._err(404,"Không tìm thấy sản phẩm");n=Number(n);if(!Number.isInteger(n)||n<1)return this._err(400,"Số lượng không hợp lệ");
+  const o=this._own(),c0=this._find(o),ex=this._line(c0,d.id),cur=ex?ex.quantity:0,q=n+cur;
+  if(q>MAXQ)return this._err(400,"Mỗi sản phẩm chỉ mua tối đa "+MAXQ+" (trong giỏ đã có "+cur+")");
+  const e=this._check(d,q);if(e)return e;
+  const c=c0||this._cart(o),t=now();
+  if(ex){ex.quantity=q;ex.unit_price=d.price;ex.updated_at=t}else DB.t.cart_items.push({id:DB.id("cart_items"),cart_id:c.id,product_id:d.id,quantity:q,unit_price:d.price,created_at:t,updated_at:t});
+  c.updated_at=t;DB.save();return this._ok("Đã thêm vào giỏ hàng",201)},
+
+ update(pid,q){const d=byId(pid),c=this._find(this._own()),ex=this._line(c,pid);if(!d||!ex)return this._err(404,"Sản phẩm không có trong giỏ");q=Number(q);
+  const e=this._check(d,q);if(e)return e;const t=now();ex.quantity=q;ex.unit_price=d.price;ex.updated_at=t;c.updated_at=t;DB.save();return this._ok("Đã cập nhật số lượng")},
+
+ remove(pid){const c=this._find(this._own()),ex=this._line(c,pid);if(!ex)return this._err(404,"Sản phẩm không có trong giỏ");
+  DB.t.cart_items=DB.t.cart_items.filter(i=>i!==ex);c.updated_at=now();DB.save();return this._ok("Đã xóa sản phẩm khỏi giỏ")},
+
+ clear(){const c=this._find(this._own());if(c){DB.t.cart_items=DB.t.cart_items.filter(i=>i.cart_id!=c.id);c.updated_at=now();DB.save()}return this._ok("Đã xóa toàn bộ giỏ hàng")},
+
+ merge(email){const g=this._find({token:gt});let moved=0,capped=0;if(!g)return{moved,capped};
+  const rows=DB.t.cart_items.filter(i=>i.cart_id==g.id);
+  if(rows.length){const u=this._cart({email}),t=now();
+   rows.forEach(r=>{const d=byId(r.product_id);if(!d)return;const ex=this._line(u,d.id),want=r.quantity+(ex?ex.quantity:0),q=Math.min(want,MAXQ,d.stock);if(q<1)return;if(q<want)capped++;
+    if(ex){ex.quantity=q;ex.unit_price=d.price;ex.updated_at=t}else DB.t.cart_items.push({id:DB.id("cart_items"),cart_id:u.id,product_id:d.id,quantity:q,unit_price:d.price,created_at:t,updated_at:t});moved++});
+   u.updated_at=t}
+  DB.t.cart_items=DB.t.cart_items.filter(i=>i.cart_id!=g.id);DB.t.carts=DB.t.carts.filter(c=>c.id!=g.id);DB.save();return{moved,capped}}
+};
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),2000)}
 const route=()=>(location.hash.slice(1)||"shop");
 const go=r=>{location.hash=r};
-function add(id,n){const d=byId(id),c=cart[id]||0;if(!d.stock){toast("Sản phẩm đã hết hàng");return}if(c+n>d.stock){toast("Vượt quá tồn kho ("+d.stock+")");return}cart[id]=c+n;saveCart();toast("Đã thêm "+d.name+" vào giỏ");draw()}
+function add(id,n){const r=CartAPI.add(id,n);toast(r.ok?"Đã thêm "+byId(id).name+" vào giỏ":r.message);draw()}
 const count=n=>DATA.filter(d=>d.cat==n).length;
 function filtered(){const k=F.kw.trim().toLowerCase(),act=cats.filter(c=>c.on).map(c=>c.name);
  let l=DATA.filter(d=>act.includes(d.cat)&&(F.cat=="Tất cả"||d.cat==F.cat)&&(!k||d.name.toLowerCase().includes(k)||("mt"+String(d.id).padStart(4,"0")).includes(k))&&d.price<=F.max&&(d.rx?F.rx:F.otc)&&(!F.forms.length||F.forms.includes(d.form))&&(!F.maker||d.maker==F.maker));
  if(F.sort=="asc")l.sort((a,b)=>a.price-b.price);if(F.sort=="desc")l.sort((a,b)=>b.price-a.price);if(F.sort=="name")l.sort((a,b)=>a.name.localeCompare(b.name,"vi"));return l}
-function head(){const u=user(),r=route(),n=Object.values(cart).reduce((a,b)=>a+b,0);
+function head(){const u=user(),r=route(),n=CartAPI.get().data.count;
  $("#nav").innerHTML=`<a data-go="shop" class="${r=="shop"?"on":""}">Thuốc</a><a data-go="cart" class="${r=="cart"?"on":""}">Giỏ hàng (${n})</a>`+(u&&u.role=="admin"?`<a data-go="admin" class="${r=="admin"?"on":""}">Quản trị</a>`:"");
  $("#hr").innerHTML=u?`<span class="mute">Xin chào, ${esc(u.name)}</span><button class="btn o" data-act="logout">Đăng xuất</button>`:`<button class="btn o" data-go="login">Đăng nhập</button><button class="btn" data-go="register">Đăng ký</button>`}
 function shop(){const l=filtered(),pg=Math.max(1,Math.ceil(l.length/6));if(F.page>pg)F.page=pg;const s=byId(F.sel);
@@ -49,11 +93,12 @@ function shop(){const l=filtered(),pg=Math.max(1,Math.ceil(l.length/6));if(F.pag
  <div class="grid">${list.map(d=>`<div class="card ${F.sel==d.id?"sel":""}" data-id="${d.id}"><div class="img">💊</div><b>${esc(d.name)}</b><div class="unit">${esc(d.unit)}</div><div class="price">${fmt(d.price)}</div><div class="row" style="margin-top:6px">${d.rx?'<span class="tag">Thuốc kê đơn</span>':d.stock?'<span class="mute" style="font-size:11px">OTC</span>':'<span class="tag">Hết hàng</span>'}<button class="sm" data-add="${d.id}" title="Thêm vào giỏ">🛒</button></div></div>`).join("")||'<p class="mute" style="grid-column:1/-1;text-align:center;padding:30px">Không tìm thấy sản phẩm phù hợp.</p>'}</div>
  ${pg>1?`<div class="pager"><span data-pg="${F.page-1}">‹</span>${Array.from({length:pg},(_,i)=>`<span data-pg="${i+1}" class="${i+1==F.page?"on":""}">${i+1}</span>`).join("")}<span data-pg="${F.page+1}">›</span></div>`:""}</main>
  <aside class="panel">${det}</aside></div>`}
-function cartV(){const ids=Object.keys(cart),sub=ids.reduce((s,i)=>s+byId(i).price*cart[i],0),ship=!sub||sub>=200000?0:20000,dis=Math.round(sub*coupon),tot=sub+ship-dis;
+function cartV(){const v=CartAPI.get().data,it=v.items;
  return `<div class="row" style="margin-bottom:16px"><div><h1>Giỏ hàng của bạn</h1><span class="mute">Quản lý các sản phẩm thuốc đã chọn trước khi thanh toán</span></div><span class="lnk" data-go="shop">＋ Thêm thuốc khác</span></div>
- ${ids.length?`<div class="crow hd"><div>Sản phẩm thuốc</div><div>Đơn giá</div><div>Số lượng</div><div>Thành tiền</div></div>`+ids.map(i=>{const d=byId(i);return `<div class="crow"><div class="row" style="justify-content:flex-start;gap:14px"><div class="img">💊</div><div><b>${esc(d.name)}</b><div class="unit">${esc(d.unit)}</div>${d.rx?'<span class="tag">Thuốc kê đơn</span>':""}</div></div><div><b>${fmt(d.price)}</b></div><div><span class="qty"><button data-cm="${i}">−</button><b>${cart[i]}</b><button data-cp="${i}">+</button></span><div><span class="lnk" style="font-size:12px" data-cd="${i}">Xóa</span></div></div><div class="price" style="font-size:16px">${fmt(d.price*cart[i])}</div></div>`}).join("")
+ ${it.length&&!user()?`<div class="panel note">Bạn chưa đăng nhập. <span class="lnk" data-go="login">Đăng nhập</span> để lưu giỏ hàng — giỏ tạm này sẽ được gộp vào giỏ của tài khoản.</div>`:""}
+ ${it.length?`<div class="crow hd"><div>Sản phẩm thuốc</div><div>Đơn giá</div><div>Số lượng</div><div>Thành tiền</div></div>`+it.map(i=>`<div class="crow"><div class="row" style="justify-content:flex-start;gap:14px"><div class="img">💊</div><div><b>${esc(i.name)}</b><div class="unit">${esc(i.unit)}</div>${i.rx?'<span class="tag">Thuốc kê đơn</span>':""}</div></div><div><b>${fmt(i.unit_price)}</b></div><div><span class="qty"><button data-cm="${i.product_id}" ${i.quantity<=1?"disabled":""} aria-label="Giảm số lượng">−</button><input type="number" min="1" max="${i.max}" value="${i.quantity}" data-qi="${i.product_id}" aria-label="Số lượng"><button data-cp="${i.product_id}" ${i.quantity>=i.max?"disabled":""} aria-label="Tăng số lượng">+</button></span><div class="unit">Tối đa ${i.max} / sản phẩm</div><div><span class="lnk" style="font-size:12px" data-cd="${i.product_id}">Xóa</span></div></div><div class="price" style="font-size:16px">${fmt(i.line_total)}</div></div>`).join("")
  :`<div class="panel" style="text-align:center;padding:40px"><p class="mute">Giỏ hàng đang trống.</p><button class="btn" data-go="shop">Chọn thuốc</button></div>`}
- ${ids.length?`<div class="panel sum"><h2>Tóm tắt đơn hàng</h2><div class="row" style="gap:10px;margin-bottom:10px"><input id="cp" placeholder="Mã giảm giá (ví dụ: YTE2026)" value="${esc(cq)}"><button class="btn d" data-act="coupon">Áp dụng</button></div><div class="row"><span>Tạm tính:</span><b>${fmt(sub)}</b></div><div class="row"><span>Phí vận chuyển:</span><b class="${ship?"":"price"}">${ship?fmt(ship):"Miễn phí"}</b></div>${dis?`<div class="row"><span>Giảm giá:</span><b class="price">−${fmt(dis)}</b></div>`:""}<div class="row tot"><span>Tổng cộng:</span><span class="price">${fmt(tot)}</span></div><div class="row" style="margin-top:12px"><button class="btn o" data-act="clear">Xóa toàn bộ giỏ</button><button class="btn" data-act="checkout">Thanh toán</button></div></div>`:""}`}
+ ${it.length?`<div class="panel sum"><h2>Tóm tắt đơn hàng</h2><div class="row" style="gap:10px;margin-bottom:10px"><input id="cp" placeholder="Mã giảm giá (ví dụ: YTE2026)" value="${esc(cq)}"><button class="btn d" data-act="coupon">Áp dụng</button></div><div class="row"><span>Tạm tính (${v.count} sản phẩm):</span><b>${fmt(v.subtotal)}</b></div><div class="row"><span>Phí vận chuyển:</span><b class="${v.shipping?"":"price"}">${v.shipping?fmt(v.shipping):"Miễn phí"}</b></div>${v.discount?`<div class="row"><span>Giảm giá:</span><b class="price">−${fmt(v.discount)}</b></div>`:""}<div class="row tot"><span>Tổng cộng:</span><span class="price">${fmt(v.total)}</span></div><div class="row" style="margin-top:12px"><button class="btn o" data-act="clear">Xóa toàn bộ giỏ</button><button class="btn" data-act="checkout">Thanh toán</button></div></div>`:""}`}
 function adminV(){const u=user();if(!u||u.role!="admin")return `<div class="panel"><div class="alert">Bạn không có quyền truy cập trang quản trị.</div><button class="btn" data-go="login">Đăng nhập Admin</button></div>`;
  const l=cats.filter(c=>c.name.toLowerCase().includes(aq.toLowerCase()));
  return `<div class="row" style="margin-bottom:16px"><div><h1>Quản lý Danh mục thuốc</h1><span class="mute">Thêm, sửa, xóa và quản lý trạng thái các nhóm thuốc trong hệ thống</span></div><button class="btn" data-act="newcat">＋ Thêm nhóm thuốc mới</button></div>
@@ -72,21 +117,21 @@ document.addEventListener("click",async e=>{const t=e.target,g=a=>t.closest("["+
  else if(x=g("data-id")){F.sel=+x.dataset.id;F.qty=1;draw()}
  else if(x=g("data-cat")){F.cat=x.dataset.cat;F.page=1;draw()}
  else if(x=g("data-pg")){F.page=Math.max(1,+x.dataset.pg);draw()}
- else if(x=g("data-q")){const s=byId(F.sel);F.qty=Math.max(1,Math.min(s.stock||1,F.qty+ +x.dataset.q));draw()}
+ else if(x=g("data-q")){const s=byId(F.sel);F.qty=Math.max(1,Math.min(s.stock||1,MAXQ,F.qty+ +x.dataset.q));draw()}
  else if(g("data-addsel")){add(F.sel,F.qty);F.qty=1;draw()}
  else if(x=g("data-form")){const f=x.dataset.form;F.forms=F.forms.includes(f)?F.forms.filter(i=>i!=f):[...F.forms,f];F.page=1;draw()}
- else if(x=g("data-cp")){add(+x.dataset.cp,1)}
- else if(x=g("data-cm")){const i=x.dataset.cm;cart[i]--;if(cart[i]<=0)delete cart[i];saveCart();draw()}
- else if(x=g("data-cd")){delete cart[x.dataset.cd];saveCart();draw()}
+ else if(x=g("data-cp")){const i=x.dataset.cp,r=CartAPI.update(i,CartAPI.qty(i)+1);if(!r.ok)toast(r.message);draw()}
+ else if(x=g("data-cm")){const i=x.dataset.cm,r=CartAPI.update(i,CartAPI.qty(i)-1);if(!r.ok)toast(r.message);draw()}
+ else if(x=g("data-cd")){const i=x.dataset.cd,r=CartAPI.remove(i);toast(r.ok?"Đã xóa "+byId(i).name+" khỏi giỏ":r.message);draw()}
  else if(x=g("data-ec")){modal(cats.find(c=>c.id==x.dataset.ec))}
  else if(x=g("data-dc")){const c=cats.find(c=>c.id==x.dataset.dc),n=count(c.name);if(n){toast(`Không thể xóa: còn ${n} sản phẩm thuộc nhóm "${c.name}"`)}else if(confirm("Xóa nhóm thuốc "+c.name+"?")){cats=cats.filter(i=>i!=c);ls.set("cats",cats);toast("Đã xóa nhóm thuốc");draw()}}
  else if(x=g("data-act")){const a=x.dataset.act;
   if(a=="tf"){F.open=!F.open;draw()}
   else if(a=="reset"){F={...F,cat:"Tất cả",max:100000,rx:true,otc:true,forms:[],maker:"",kw:"",page:1};draw()}
-  else if(a=="clear"){cart={};saveCart();draw();toast("Đã xóa toàn bộ giỏ hàng")}
+  else if(a=="clear"){CartAPI.clear();draw();toast("Đã xóa toàn bộ giỏ hàng")}
   else if(a=="coupon"){cq=$("#cp").value.trim().toUpperCase();coupon=cq=="YTE2026"?0.05:0;toast(coupon?"Áp dụng giảm 5%":"Mã giảm giá không hợp lệ");draw()}
-  else if(a=="checkout"){if(!user()){toast("Vui lòng đăng nhập để thanh toán");go("login")}else{cart={};saveCart();coupon=0;cq="";toast("Đặt hàng thành công (demo)");draw()}}
-  else if(a=="logout"){sess=null;ls.set("sess",null);cart=ls.get(ckey(),{});toast("Đã đăng xuất");go("shop");draw()}
+  else if(a=="checkout"){if(!user()){toast("Vui lòng đăng nhập để thanh toán");go("login")}else{CartAPI.clear();coupon=0;cq="";toast("Đặt hàng thành công (demo)");draw()}}
+  else if(a=="logout"){sess=null;ls.set("sess",null);toast("Đã đăng xuất");go("shop");draw()}
   else if(a=="newcat")modal();else if(a=="mx")$("#modal").classList.remove("on");
   else if(a=="msave"){const n=$("#mn").value.trim(),id=x.dataset.id;if(!n){toast("Vui lòng nhập tên nhóm");return}if(cats.some(c=>c.name.toLowerCase()==n.toLowerCase()&&c.id!=id)){toast("Tên nhóm đã tồn tại");return}
    if(id){const c=cats.find(c=>c.id==id);c.name=n;c.desc=$("#md").value.trim();c.on=+$("#ms").value}else cats.push({id:Math.max(0,...cats.map(c=>c.id))+1,name:n,desc:$("#md").value.trim(),on:+$("#ms").value});
@@ -99,10 +144,11 @@ document.addEventListener("click",async e=>{const t=e.target,g=a=>t.closest("["+
   else if(a=="login"){const id=$("#li").value.trim().toLowerCase(),p=$("#lp").value;
    if(Date.now()<lock.until){loginMsg="Tài khoản tạm khóa. Vui lòng thử lại sau "+Math.ceil((lock.until-Date.now())/60000)+" phút.";draw();return}
    const u=users.find(u=>u.email==id);
-   if(u&&u.pw==await hash(p)){sess=u.email;ls.set("sess",sess);lock={n:0,until:0};ls.set("lock",lock);loginMsg="";cart=ls.get(ckey(),{});toast("Đăng nhập thành công");go(u.role=="admin"?"admin":"shop");draw()}
+   if(u&&u.pw==await hash(p)){sess=u.email;ls.set("sess",sess);lock={n:0,until:0};ls.set("lock",lock);loginMsg="";const m=CartAPI.merge(u.email);toast(m.moved?"Đăng nhập thành công. Đã gộp "+m.moved+" sản phẩm từ giỏ tạm vào giỏ của bạn"+(m.capped?" (một số mặt hàng được giới hạn tối đa 10 / theo tồn kho)":""):"Đăng nhập thành công");go(u.role=="admin"?"admin":"shop");draw()}
    else{lock.n++;if(lock.n>=5){lock={n:0,until:Date.now()+9e5};loginMsg="Sai 5 lần liên tiếp. Tài khoản bị khóa 15 phút."}else loginMsg="Sai thông tin đăng nhập. Sai 5 lần liên tiếp tài khoản sẽ bị khóa 15 phút.";ls.set("lock",lock);draw()}}}
 });
 document.addEventListener("input",e=>{const i=e.target.id;if(i=="q"){F.kw=e.target.value;F.page=1;draw()}else if(i=="aq"){aq=e.target.value;draw()}else if(i=="fmax"){F.max=+e.target.value;F.page=1;draw()}});
-document.addEventListener("change",e=>{const i=e.target.id;if(i=="fs"){F.sort=e.target.value;draw()}else if(i=="fmk"){F.maker=e.target.value;F.page=1;draw()}else if(i=="fotc"){F.otc=e.target.checked;F.page=1;draw()}else if(i=="frx"){F.rx=e.target.checked;F.page=1;draw()}});
+document.addEventListener("change",e=>{const i=e.target.id;if(i=="fs"){F.sort=e.target.value;draw()}else if(i=="fmk"){F.maker=e.target.value;F.page=1;draw()}else if(i=="fotc"){F.otc=e.target.checked;F.page=1;draw()}else if(i=="frx"){F.rx=e.target.checked;F.page=1;draw()}
+ else if(e.target.dataset.qi){const p=e.target.dataset.qi,mx=Math.min(MAXQ,byId(p).stock);let n=Math.round(+e.target.value);if(!(n>=1))n=1;if(n>mx){n=mx;toast("Tối đa "+mx+" cho mỗi sản phẩm")}const r=CartAPI.update(p,n);if(!r.ok)toast(r.message);draw()}});
 addEventListener("hashchange",draw);
 (async()=>{if(!users.length){users=[{name:"Quản trị viên",email:"admin@pharma.vn",role:"admin",pw:await hash("Admin@123")}];ls.set("users",users)}draw()})();
