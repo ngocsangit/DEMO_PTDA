@@ -27,5 +27,31 @@ CREATE TABLE cart_items (
   CONSTRAINT uq_cart_product  UNIQUE (cart_id, product_id),
   CONSTRAINT ck_items_qty     CHECK (quantity BETWEEN 1 AND 10)
 );
-
+CREATE TABLE dbo.orders (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    recipient_name NVARCHAR(120) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    shipping_address NVARCHAR(500) NOT NULL,
+    note NVARCHAR(500) NULL,
+    subtotal DECIMAL(12,0) NOT NULL,
+    shipping_fee DECIMAL(12,0) NOT NULL,
+    total DECIMAL(12,0) NOT NULL,
+    status VARCHAR(20) NOT NULL CONSTRAINT DF_orders_status DEFAULT 'pending',
+    created_at DATETIME2 NOT NULL CONSTRAINT DF_orders_created DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_orders_users FOREIGN KEY (user_id) REFERENCES dbo.users(id),
+    CONSTRAINT CK_orders_status CHECK (status IN ('pending','confirmed','shipping','completed','cancelled'))
+);
+CREATE TABLE dbo.order_items (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    product_name NVARCHAR(200) NOT NULL,
+    unit NVARCHAR(100) NOT NULL,
+    quantity INT NOT NULL,
+    unit_price DECIMAL(12,0) NOT NULL,
+    line_total AS (quantity * unit_price) PERSISTED,
+    CONSTRAINT FK_order_items_orders FOREIGN KEY (order_id) REFERENCES dbo.orders(id) ON DELETE CASCADE,
+    CONSTRAINT FK_order_items_products FOREIGN KEY (product_id) REFERENCES dbo.products(id)
+);
 
